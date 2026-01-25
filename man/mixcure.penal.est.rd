@@ -73,7 +73,7 @@ mc.ple1$coefficients
 # Relatively low event rate, univariate
 data(ANNbcBMdat2)
 # Fit the MC model using maximum likelihoodlizards.
-mc.mle2 <- mixcure.penal.est(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat2,init=c(1,-0.1,-10,1,1), pl=F)
+mc.mle2 <- mixcure.penal.est(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat2,init=c(1,-0.1,-10,1,0.1), pl=F)
 # Now the bias-reduced fit:
 mc.ple2 <- mixcure.penal.est(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat2,init=c(1,-0.1,-10,1,0.1), pl=T)
 
