@@ -47,14 +47,11 @@ Changchang Xu
 
 data(ANNbcBMdat1)
 
-mc.mle1 <- mixcure.penal.est(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1,init=c(1,-0.1,-10,1,1), pl=F)
-mc.ple1 <- mixcure.penal.est(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1,init=c(1,-0.1,-10,1,1), pl=T)
-
 # Perform LRT for the MC model using maximum likelihoods:
-mc.mle.lrt1 <- mixcure.penal.1d.nested.lrt(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1, mc.mle1$loglikelihood, init=c(1,-0.1,-10,1,1), pl=F)
+mc.mle.lrt1 <- mixcure.penal.1d.nested.lrt(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1, init=c(1,-0.1,-10,1,1), pl=F)
 
 # Now for the bias-reduced model using penalized maximum likelihood:
-mc.ple.lrt1 <- mixcure.penal.1d.nested.lrt(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1, mc.ple1$loglikelihood,init=c(1,-0.1,-10,1,1), pl=T)
+mc.ple.lrt1 <- mixcure.penal.1d.nested.lrt(Surv(Time, CENS == 1) ~ Her2,data=ANNbcBMdat1, init=c(1,-0.1,-10,1,1), pl=T)
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
