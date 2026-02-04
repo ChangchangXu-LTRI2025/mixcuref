@@ -27,9 +27,6 @@ MC model specification in the form of a conventional survival model, i.e., Surv(
   \item{iterlim}{
   specifies the number of maximum iterations for model parameter optimization. DEFAULT set to 200.
   }
-  \item{loglik}{
-  specifies the (penalized) loglikelihood value of the full model or non-restrected model.
-  }
 }
 \details{
 see mixcure.penal.est
