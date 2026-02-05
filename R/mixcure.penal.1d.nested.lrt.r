@@ -6,7 +6,7 @@
 #### previously 'mixcure.penal.ESTV.nested1d.r'  ##
 ###################################################
 
-mixcure.penal.1d.nested.lrt <- function(formula, data, init, pl, iterlim = 200) {
+mixcure.penal.1d.nested.lrt <- function(formula, data, init0, init1, pl, iterlim = 200) {
 require(splines)
 require(survival)
 require(abind)
@@ -108,7 +108,7 @@ require(abind)
   # Parameter estimation under Ha (non-restricted likelihood)
   # maximize penalized or unpenalized loglikelihood by nlm;
   maximizer0 <- nlm(
-    f = loglik.mixture, p = init, survt=survt, design.matrix=design.matrix,
+    f = loglik.mixture, p = init0, survt=survt, design.matrix=design.matrix,
     pl = pl,
     iterlim = iterlim, hessian=F);
 
@@ -234,7 +234,7 @@ require(abind)
 # index.cure.v[-1] for no intercept calculation
   for (k in index.cure.v) {
     maximizer <- nlm(
-      f = loglik.mixture.part, p = init[-k],
+      f = loglik.mixture.part, p = init1[-k],
       survt = survt, design.matrix0 = design.matrix,
       design.matrix1=design.matrix,
       index.cure.var=index.cure.v[-k], pl=pl,
@@ -263,7 +263,7 @@ require(abind)
   for (k in index.surv.v) {
     is=k-length(index.cure.v)
     maximizer <- nlm(
-      f = loglik.mixture.part, p = init[-k],
+      f = loglik.mixture.part, p = init1[-k],
       survt = survt, design.matrix1 = design.matrix,
       design.matrix0=design.matrix,
       index.surv.var=index.surv.v[-is], pl=pl,
@@ -282,14 +282,14 @@ require(abind)
 
   coef.table.cure <- cbind(
     'LL.cure' = ll.cure,
-    'LLR'         = llr.cure,
+    'LLR'         = abs(llr.cure),
     'Pr(>chisq)'  = pval.cure
   );
   rownames(coef.table.cure) <- colnames(design.matrix);
 
   coef.table.surv <- cbind(
       'LL.surv' = ll.surv,
-    'LLR'         = llr.surv,
+    'LLR'         = abs(llr.surv),
     'Pr(>chisq)'  = pval.surv
   );
   rownames(coef.table.surv) <- colnames(design.matrix);
