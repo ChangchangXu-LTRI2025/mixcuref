@@ -1,0 +1,183 @@
+---
+title: "mixcuref Manual"
+author: "Changchang Xu"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{mixcuref Manual}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  eval = FALSE,
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Overview
+
+`mixcuref` fits Weibull mixture cure models by maximum likelihood or Firth-type penalized likelihood. The package provides direct estimation, profile-likelihood confidence intervals, nested likelihood-ratio tests, and utilities for separation diagnostics.
+
+The main user-facing functions are:
+
+- `mixcure.penal.est()` for model fitting
+- `mixcure.penal.profile.CI()` for profile-likelihood confidence intervals
+- `mixcure.penal.1d.nested.lrt()` and `mixcure.penal.2d.nested.lrt()` for nested tests
+- `separation.detection()` for sparse-data diagnostics
+- `fit_mixture_cure()` as a thin helper used by the meta-layer
+- `mixcuref_fit()` as the adapter used by `Mixcuref.Meta`
+
+# Package data
+
+The package includes three real breast cancer datasets:
+
+- `ANNbcBMdat1`: high event rate, univariate example
+- `ANNbcBMdat2`: lower event rate, univariate example
+- `ANNbcBMdat5`: lower event rate, multivariable example
+
+# Fitting a mixture cure model
+
+A mixture cure model is specified using a standard survival formula `Surv(time, status) ~ covariates`. Covariates are used in both the cure and latency components.
+
+```{r}
+library(mixcuref)
+library(survival)
+
+data(ANNbcBMdat1)
+
+fit_mle <- mixcure.penal.est(
+  Surv(Time, CENS == 1) ~ Her2,
+  data = ANNbcBMdat1,
+  init = c(1, -0.1, -10, 1, 1),
+  pl = FALSE
+)
+
+fit_ftpl <- mixcure.penal.est(
+  Surv(Time, CENS == 1) ~ Her2,
+  data = ANNbcBMdat1,
+  init = c(1, -0.1, -10, 1, 1),
+  pl = TRUE
+)
+
+fit_mle$coefficients
+fit_ftpl$coefficients
+```
+
+# Multivariable example
+
+```{r}
+data(ANNbcBMdat5)
+
+fit5 <- mixcure.penal.est(
+  Surv(Time, CENS == 1) ~ Her2 + LuminalA + TN + MENS0 + TUMCT,
+  data = ANNbcBMdat5,
+  init = c(5, rep(0, 5), -10, rep(0, 5), 0.1),
+  pl = TRUE
+)
+
+fit5$coefficients
+coef(fit5)
+vcov(fit5)
+```
+
+# Profile-likelihood confidence intervals
+
+```{r}
+plci1 <- mixcure.penal.profile.CI(
+  Surv(Time, CENS == 1) ~ Her2,
+  data = ANNbcBMdat1,
+  init = c(1, -0.1, -10, 1, 1),
+  pl = FALSE,
+  apct = 0.05
+)
+
+plci1$coefficients
+```
+
+# Nested likelihood-ratio tests
+
+```{r}
+lrt1 <- mixcure.penal.1d.nested.lrt(
+  Surv(Time, CENS == 1) ~ Her2,
+  data = ANNbcBMdat1,
+  init = c(1, -0.1, -10, 1, 1),
+  pl = FALSE,
+  loglik = fit_mle$loglikelihood
+)
+
+lrt1
+```
+
+# Separation diagnostics
+
+```{r}
+sep_diag <- separation.detection(fit5, pl = TRUE, nsteps = 20)
+sep_diag
+```
+
+# Meta-layer adapters
+
+`mixcuref` can still be used directly, but it also provides helper functions that support the `Mixcuref.Meta` package.
+
+```{r}
+fit_from_helper <- fit_mixture_cure(
+  incidence = ~ Her2,
+  latency = ~ Her2,
+  time = ANNbcBMdat1$Time,
+  status = ANNbcBMdat1$CENS,
+  data = ANNbcBMdat1,
+  control = list(pl = FALSE)
+)
+
+fit_from_helper
+```
+
+```{r}
+# spec is a model specification object created by Mixcuref.Meta
+# mixcuref_fit(spec, control = list(pl = FALSE))
+```
+
+# Notes
+
+- `pl = FALSE` requests standard maximum likelihood.
+- `pl = TRUE` requests Firth-type penalized likelihood.
+- Initial values must be supplied in the order: cure coefficients, survival coefficients, Weibull shape parameter.
+- For categorical covariates with more than two categories, create dummy variables before fitting.
+
+# Session information
+
+```{r, eval=T, echo=F}
+pkgs <- c(
+#  "mixcuref",
+  "survival",
+  "abind",
+  "R.utils"
+)
+
+desc_field <- function(pkg, field) {
+  x <- tryCatch(utils::packageDescription(pkg, fields = field), error = function(e) NA)
+  if (is.null(x) || is.na(x)) "" else x
+}
+
+pkg_table <- data.frame(
+  Package = pkgs,
+  Version = sapply(pkgs, function(x) as.character(packageVersion(x))),
+  Built   = sapply(pkgs, desc_field, field = "Built"),
+  Remote  = sapply(pkgs, desc_field, field = "RemoteSha"),
+  row.names = NULL,
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(pkg_table, caption = "Package Versions")
+
+cat("\n\n")
+
+#sessionInfo()
+```
